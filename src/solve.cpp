@@ -152,7 +152,7 @@ int main (int argc, char* argv[])
     	stop();
 		MPI_Reduce(&sum_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 		MPI_Reduce(&sum_time, &all_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-		fprintf(stderr, "%lf, %lf", max_time, all_time);
+		fprintf(stderr, "%lf %lf", max_time, all_time);
 
     	for(k = start; k <= end; k++)
     		if(primes[to_i(k, start)])
