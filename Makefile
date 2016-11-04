@@ -50,7 +50,6 @@ endif
 # deps.mk contains redirect to dependency generation
 deps.mk: 
 	mkdir -p $(BUILD_DIR) $(OBJ_DIR) $(BIN_DIR) $(DEP_DIR)
-	mkdir -p ./data/result
 	echo '-include $(call src_to_dep, $(CXXFILES))' >deps.mk
 
 # Rules for compiling targets
@@ -73,8 +72,8 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 # Delete all temprorary and binary files
 clean:
 	rm -rf $(BUILD_DIR)
-	rm -rf result/
 	rm -f deps.mk
+	rm -rf data/
 
 # Additional targers for testing purposes
 

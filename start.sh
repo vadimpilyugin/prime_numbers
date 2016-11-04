@@ -6,8 +6,8 @@ mkdir -p data/pictures
 :>data/results/sum.txt
 :>data/results/max.txt
 make all
-for((i=1; i < 2; i++)); do
-	prog_time=$(mpiexec -n $i build/bin/solve 1 10000000 2>&1 1>data/result.txt)
+for((i=1; i < 17; i++)); do
+	prog_time=$(mpiexec -n $i build/bin/solve 1 100000 2>&1 1>data/result.txt)
 	time=($prog_time)
 	time_all="$i, ${time[1]}"
 	time_max="$i, ${time[0]}"
