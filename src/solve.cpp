@@ -26,6 +26,8 @@ int at(int i, int start)
 void find_pr(char *res, char *primes, int start_n, int end_n)
 {
 	int j, k, offset;
+	if(end_n < start_n)
+		return;
 	for(k = start_n; k <= end_n; k++)
 		primes[to_i(k, start_n)] = 1; //обнуляем массив простых чисел
 	offset = start_n % 2;
@@ -69,6 +71,13 @@ void sieve(char *res, char *primes, int start, int end, double *sum_time)
 	{
 		char *res_tmp = (char*) malloc(int(floor(sqrt(sqr_n)))*sizeof(char));
 		sieve(res_tmp, res, 1, sqr_n, sum_time); // получаем первые sqr_n простых чисел
+		// int k;
+		// for(k = 1; k <= sqr_n; k++)
+  //   		if(res[to_i(k, 1)])
+  //   		{
+	 //    		if(!prime(k))
+		// 			fprintf(stderr, "ERROR! k = %d\n", k);
+  //   		}
 		free(res_tmp);
 	}
 		
@@ -119,7 +128,10 @@ int main (int argc, char* argv[])
     	char *primes = (char*) malloc((end-start+1)*sizeof(char));
     	double sum_time = 0;
     	sieve(res, primes, start, end, &sum_time);
+		if(debug) fprintf(stderr, "Proc %d: %lf sec\n", rank, sum_time);
     	double max_time, all_time;
+    	int ar[3]; ar[0] = 0;
+    	MPI_Bcast(ar, 3, MPI_INT, 0, MPI_COMM_WORLD);
 		MPI_Reduce(&sum_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 		MPI_Reduce(&sum_time, &all_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 		fprintf(stderr, "Максимальное время среди процессов: %lf\n", max_time);
@@ -139,10 +151,6 @@ int main (int argc, char* argv[])
 		 		printf(" ");
     		}
     	fprintf(stderr, "Найдено простых: %d\n", count);
-
-
-    	int ar[3]; ar[1] = 0;
-    	MPI_Bcast(ar, 3, MPI_INT, 0, MPI_COMM_WORLD);
     	
 
 		free(res);
@@ -156,7 +164,7 @@ int main (int argc, char* argv[])
     		int ar[3];
     		double sum_time = 0, start_time, finish_time;
     		MPI_Bcast(ar, 3, MPI_INT, 0, MPI_COMM_WORLD);
-    		if(ar[1] != 0)
+    		if(ar[0] != 0)
     		{
 				char *res = (char*) malloc(ar[0] * sizeof(char));
 				MPI_Bcast(res, ar[0], MPI_CHAR, 0, MPI_COMM_WORLD);
@@ -174,6 +182,7 @@ int main (int argc, char* argv[])
 			}
 			else
 			{
+				if(debug) fprintf(stderr, "Proc %d: %lf sec\n", rank, sum_time);
 				MPI_Reduce(&sum_time, &sum_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 				MPI_Reduce(&sum_time, &sum_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 				MPI_Finalize();
