@@ -19,15 +19,30 @@ int at(int i, int start)
 }
 void find_pr(char *res, char *primes, int start_n, int end_n)
 {
-	int j, k;
+	int j, k, offset;
+	if(end_n < start_n)
+		return;
 	for(k = start_n; k <= end_n; k++)
 		primes[to_i(k, start_n)] = 1; //обнуляем массив простых чисел
-	for(j = start_n + 2 - (start_n % 2); j <= end_n; j += 2)
+	if(start_n == 1)
+		primes[0] = 0; //1-не простое
+	offset = start_n % 2;
+	int start = start_n + offset;
+	if(start == 2)
+		start = 4;
+	for(j = start; j <= end_n; j += 2)
 		primes[to_i(j, start_n)] = 0; //исключаем четные
 	for(k = 3; k*k <= end_n; k++) //идем по массиву простых
 		if(res[to_i(k, 1)]) //если число простое
-			for(j = start_n + k - (start_n % k); j <= end_n; j += k)
+		{
+			offset = (k-start_n % k)%k;
+			start = start_n + offset;
+			if(start == k)
+				start = k*k;
+			for(j = start; j <= end_n; j += k)
 				primes[to_i(j, start_n)] = 0;
+		}
+
 }
 void sieve_non_rec(char *res, int n)
 {
@@ -57,8 +72,8 @@ int main()
 		if(res[to_i(k, 1)])
 			printf("%d, ", k);
 	printf("\n");
-	int start_n = 9521;
-	int end_n = 10000;
+	int start_n = 1;
+	int end_n = 100;
 	char *primes = (char*) malloc((end_n-start_n+1)*sizeof(char));
 	find_pr(res, primes, start_n, end_n);
 	for(k = start_n; k <= end_n; k++)
