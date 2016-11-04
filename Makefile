@@ -1,8 +1,8 @@
-CXX = mpicc
-CXXFLAGS = -Wall
+CXX = g++
+CXXFLAGS = -O2 -g -Wall -std=c++0x
 
 # Strict compiler options
-CXXFLAGS += -Wfloat-equal
+CXXFLAGS += -Wfloat-equal -Wall
 # Directories with source code
 SRC_DIR = src
 INCLUDE_DIR = include
