@@ -88,9 +88,7 @@ void sieve(char *res, char *primes, int start, int end)
 {
 	int offset;
 	int sqr_n = int(floor(sqrt(end))); // количество чисел до корня из n
-	go();
 	sieve_non_rec(res, sqr_n);
-	stop();
 	// if(sqr_n <= 100)
 	// 	sieve_non_rec(res, sqr_n);
 	// else
@@ -112,9 +110,7 @@ void sieve(char *res, char *primes, int start, int end)
 		int start_n = ar[2] + rank*ar[1];
 		int end_n = start_n + ar[1] - 1;
 		char *primes_tmp = (char*) malloc(ar[1]);
-		go();
 		find_pr(res, primes_tmp, start_n, end_n);
-		stop();
 		//fprintf(stderr, "Waiting in root for gather...\n");
 		MPI_Gather(primes_tmp, ar[1], MPI_CHAR, primes, ar[1], MPI_CHAR, 0, MPI_COMM_WORLD);
 		//fprintf(stderr, "root! And..finish!\n");
@@ -147,15 +143,16 @@ int main (int argc, char* argv[])
     	int sqr_n = int(floor(sqrt(end)));
     	char *res = (char*) malloc(sqr_n*sizeof(char));
     	char *primes = (char*) malloc((end-start+1)*sizeof(char));
+    	go();
     	sieve(res, primes, start, end);
 		//fprintf(stderr, "Proc %d: %lf sec\n", rank, sum_time);
     	double max_time, all_time;
     	int ar[3]; ar[0] = 0;
     	MPI_Bcast(ar, 3, MPI_INT, 0, MPI_COMM_WORLD);
+    	stop();
 		MPI_Reduce(&sum_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 		MPI_Reduce(&sum_time, &all_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-		fprintf(stderr, "%lf\n", max_time);
-		fprintf(stderr, "%lf\n", all_time);
+		fprintf(stderr, "%lf, %lf", max_time, all_time);
 
     	for(k = start; k <= end; k++)
     		if(primes[to_i(k, start)])
@@ -176,6 +173,7 @@ int main (int argc, char* argv[])
     }
     else
     {
+    	go();
     	while(1)
     	{
     		int ar[3];
@@ -189,9 +187,7 @@ int main (int argc, char* argv[])
 				int start_n = ar[2] + rank*ar[1];
 				int end_n = start_n + ar[1] - 1;
 				char *primes = (char*) malloc(ar[1]);
-				go();
 				find_pr(res, primes, start_n, end_n);
-				stop();
 				MPI_Gather(primes, ar[1], MPI_CHAR, primes, ar[1], MPI_CHAR, 0, MPI_COMM_WORLD);
 				free(primes);
 				free(res);
@@ -199,6 +195,7 @@ int main (int argc, char* argv[])
 			else
 				break;
     	}
+    	stop();
 		//fprintf(stderr, "Proc %d: %lf sec\n", rank, sum_time);
 		MPI_Reduce(&sum_time, &sum_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 		MPI_Reduce(&sum_time, &sum_time, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
