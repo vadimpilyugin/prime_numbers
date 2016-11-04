@@ -33,12 +33,9 @@ void foo(char *res, char *primes, int start_n, int end_n)
 	printf("\n");
 }
 
-int main()
+void bar(char *res, int n)
 {
-	int n = 100;
-	char *res = (char*) malloc(n*sizeof(char));
-	int i, j, k;
-
+	int j, k;
 	for(k = 1; k <= n; k++)
 		res[to_i(k, 1)] = 1;
 	res[to_i(1, 1)] = 0; // 1 - не простое число
@@ -50,6 +47,14 @@ int main()
 			else
 				for(j = k*k; j <= n; j+=2*k)
 					res[to_i(j, 1)] = 0;
+}
+
+int main()
+{
+	int n = 100;
+	char *res = (char*) malloc(n*sizeof(char));
+	int i, j, k;
+	bar(res, n);
 	for(k = 1; k <= n; k++)
 		printf("%d, ", res[to_i(k, 1)]);
 	printf("\n");
