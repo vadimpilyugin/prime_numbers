@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "mpi.h"
 
-#define debug 1
+#define debug 0
 
 int rank, proc_num;
 
@@ -107,7 +107,7 @@ int main (int argc, char* argv[])
 
     if(rank == 0)
     {
-    	int n = 10000;
+    	int n = int(1e8);
     	char *res = (char*) malloc(n*sizeof(char));
     	
     	sieve(n, res);
@@ -116,8 +116,13 @@ int main (int argc, char* argv[])
 			if(res[to_i(k, 1)])
 			{
 				printf("%d", k);
-				if(!prime(k))
-					printf("!!!");
+				if(debug)
+					if(!prime(k))
+					{
+						printf("!!!");
+						if(debug) fprintf(stderr, "ERROR! k = %d\n", k);
+					}
+					
 				printf("\n");
 			}
 
