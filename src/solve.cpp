@@ -58,43 +58,79 @@ void sieve_non_rec(char *res, int n)
 					res[to_i(j, 1)] = 0;
 		}
 }
-
-void sieve(int n, char *res)
+// void sieve_first_n(int n, char *res)
+//  {
+//  	int k, offset;
+//  	if(n <= 100)
+//  		sieve_non_rec(res, n);
+//  	else
+//  	{
+//  		int sqr_n = int(floor(sqrt(n))); //количество чисел до корня из n
+//  		sieve(sqr_n, res); //получаем первые sqr_n простых чисел
+//  		int part_size = int(floor((float(n) - sqr_n)/proc_num)); //делим оставшуюся область, каждому поровну
+//  		int ar[2]; ar[0] = sqr_n; ar[1] = part_size; //передаем начальное количество простых чисел и размер части
+//  		MPI_Bcast(ar, 2, MPI_INT, 0, MPI_COMM_WORLD); //всем рабам и мастеру выделить буфер для приема простых чисел
+//  		MPI_Bcast(res, sqr_n, MPI_CHAR, 0, MPI_COMM_WORLD); //собственно раздача простых чисел
+ 
+//  		// каждый процесс вычисляет свою область
+//  		{
+//  			// res = malloc(ar[1])
+//  			int start_n = ar[0] + rank*ar[1] + 1;
+//  			int end_n = start_n + ar[1] - 1;
+//  			char *primes = (char*) malloc(end_n - start_n + 1);
+//  			find_pr(res, primes, start_n, end_n);
+//  			MPI_Gather(primes, ar[1], MPI_CHAR, res + ar[0], ar[1], MPI_CHAR, 0, MPI_COMM_WORLD);
+//  			free(primes);
+//  			// free(res);
+//  		}
+//  		if((offset = (n-sqr_n)%proc_num) != 0)
+//  		{
+//  			if(debug) fprintf(stderr, "Не делится %d на %d: остаток %d\n", n, proc_num, offset);
+//  			int start_n = n-offset+1;
+//  			int end_n = n;
+//  			char *primes = (char*) malloc(end_n - start_n + 1);
+//  			find_pr(res, primes, start_n, end_n);
+//  			for(k = start_n; k <= end_n; k++)
+//  				res[to_i(k, 1)] = primes[to_i(k, start_n)];
+//  			free(primes);
+//  		}
+//  	}
+//  }
+void sieve(char *res, char *primes, int start, int end)
 {
-	int k, offset;
-	if(n <= 100)
-		sieve_non_rec(res, n);
+	int offset;
+	int sqr_n = int(floor(sqrt(end))); // количество чисел до корня из n
+	if(sqr_n <= 100)
+		sieve_non_rec(res, sqr_n);
 	else
 	{
-		int sqr_n = int(floor(sqrt(n))); //количество чисел до корня из n
-		sieve(sqr_n, res); //получаем первые sqr_n простых чисел
-		int part_size = int(floor((float(n) - sqr_n)/proc_num)); //делим оставшуюся область, каждому поровну
-		int ar[2]; ar[0] = sqr_n; ar[1] = part_size; //передаем начальное количество простых чисел и размер части
-		MPI_Bcast(ar, 2, MPI_INT, 0, MPI_COMM_WORLD); //всем рабам и мастеру выделить буфер для приема простых чисел
-		MPI_Bcast(res, sqr_n, MPI_CHAR, 0, MPI_COMM_WORLD); //собственно раздача простых чисел
+		char *res_tmp = (char*) malloc(int(floor(sqrt(sqr_n)))*sizeof(char));
+		sieve(res_tmp, res, 1, sqr_n); // получаем первые sqr_n простых чисел
+		free(res_tmp);
+	}
+		
+	// так или иначе, мы получаем в res первые sqr_n простых чисел
+	int part_size = int(floor((float(end) - start + 1)/proc_num)); //чисел, включая концы, +1
+	int ar[3]; ar[0] = sqr_n; ar[1] = part_size; ar[2] = start; //передаем начальное количество простых чисел, размер части и стартовую точку
+	MPI_Bcast(ar, 3, MPI_INT, 0, MPI_COMM_WORLD); //всем рабам и мастеру выделить буфер для приема простых чисел
+	MPI_Bcast(res, sqr_n, MPI_CHAR, 0, MPI_COMM_WORLD); //собственно раздача простых чисел
 
-		// каждый процесс вычисляет свою область
-		{
-			// res = malloc(ar[1])
-			int start_n = ar[0] + rank*ar[1] + 1;
-			int end_n = start_n + ar[1] - 1;
-			char *primes = (char*) malloc(end_n - start_n + 1);
-			find_pr(res, primes, start_n, end_n);
-			MPI_Gather(primes, ar[1], MPI_CHAR, res + ar[0], ar[1], MPI_CHAR, 0, MPI_COMM_WORLD);
-			free(primes);
-			// free(res);
-		}
-		if((offset = (n-sqr_n)%proc_num) != 0)
-		{
-			if(debug) fprintf(stderr, "Не делится %d на %d: остаток %d\n", n, proc_num, offset);
-			int start_n = n-offset+1;
-			int end_n = n;
-			char *primes = (char*) malloc(end_n - start_n + 1);
-			find_pr(res, primes, start_n, end_n);
-			for(k = start_n; k <= end_n; k++)
-				res[to_i(k, 1)] = primes[to_i(k, start_n)];
-			free(primes);
-		}
+	// каждый процесс вычисляет свою область
+	{
+		if(debug) fprintf(stderr, "Процесс %d получил приказ: part_size = %d, начало в %d\n", rank, ar[1], ar[2]);
+		int start_n = ar[2] + rank*ar[1];
+		int end_n = start_n + ar[1] - 1;
+		char *primes_tmp = (char*) malloc(ar[1]);
+		find_pr(res, primes_tmp, start_n, end_n);
+		MPI_Gather(primes_tmp, ar[1], MPI_CHAR, primes, ar[1], MPI_CHAR, 0, MPI_COMM_WORLD);
+		free(primes_tmp);
+	}
+	if((offset = (end-start+1)%proc_num) != 0)
+	{
+		if(debug) fprintf(stderr, "Не делится область [%d, %d] на %d: остаток %d\n", start, end, proc_num, offset);
+		int start_n = end-offset+1;
+		int end_n = end;
+		find_pr(res, primes+to_i(start_n, start), start_n, end_n);
 	}
 }
 
@@ -107,41 +143,46 @@ int main (int argc, char* argv[])
 
     if(rank == 0)
     {
-    	int n = int(1e8);
-    	char *res = (char*) malloc(n*sizeof(char));
+    	// int n = int(1e8);
+    	// char *res = (char*) malloc(n*sizeof(char));
     	
-    	sieve(n, res);
-		int k;
-    	for(k = 1; k <= n; k++)
-			if(res[to_i(k, 1)])
-			{
-				printf("%d", k);
-				if(debug)
-					if(!prime(k))
-					{
+  //   	sieve(n, res);
+		// int k;
+  //   	for(k = 1; k <= n; k++)
+		// 	if(res[to_i(k, 1)])
+		// 	{
+		// 		printf("%d", k);
+		// 		if(debug)
+		// 			if(!prime(k))
+		// 			{
+		// 				printf("!!!");
+		// 				if(debug) fprintf(stderr, "ERROR! k = %d\n", k);
+		// 			}
+					
+		// 		printf("\n");
+		// 	}
+
+    	int start = 100, end = 10000;
+    	int k;
+    	int sqr_n = int(floor(sqrt(end)));
+    	char *res = (char*) malloc(sqr_n*sizeof(char));
+    	char *primes = (char*) malloc((end-start+1)*sizeof(char));
+    	sieve(res, primes, start, end);
+    	for(k = start; k <= end; k++)
+    		if(primes[to_i(k, start)])
+    		{
+    			printf("%d", k);
+    			if(debug)
+	    			if(!prime(k))
+			 		{
 						printf("!!!");
 						if(debug) fprintf(stderr, "ERROR! k = %d\n", k);
 					}
-					
-				printf("\n");
-			}
+		 		printf("\n");
+    		}
 
-    	// int k;
-    	// int sqr_n = int(floor(sqrt(n)));
-    	// int start = 100, end = 200;
-    	// sieve_non_rec(res, sqr_n);
-    	// find_pr(res, res+start-1, start, end);
-    	// for(k = start; k <= end; k++)
-    	// 	if(res[to_i(k, 1)])
-    	// 	{
-    	// 		printf("%d", k);
-    	// 		if(!prime(k))
-		 		// 	printf("!!!");
-		 		// printf("\n");
-    	// 	}
-
-    	int ar[2]; ar[1] = 0;
-    	MPI_Bcast(ar, 2, MPI_INT, 0, MPI_COMM_WORLD);
+    	int ar[3]; ar[1] = 0;
+    	MPI_Bcast(ar, 3, MPI_INT, 0, MPI_COMM_WORLD);
     	
 				
 		free(res);
@@ -152,18 +193,18 @@ int main (int argc, char* argv[])
     {
     	while(1)
     	{
-    		int ar[2];
-    		MPI_Bcast(ar, 2, MPI_INT, 0, MPI_COMM_WORLD);
+    		int ar[3];
+    		MPI_Bcast(ar, 3, MPI_INT, 0, MPI_COMM_WORLD);
     		if(ar[1] != 0)
     		{
 				char *res = (char*) malloc(ar[0] * sizeof(char));
 				MPI_Bcast(res, ar[0], MPI_CHAR, 0, MPI_COMM_WORLD);
-				if(debug) fprintf(stderr, "Процесс %d получил приказ: part_size = %d, начало в %d\n", rank, ar[1], ar[0]);
-				int start_n = ar[0] + rank*ar[1] + 1;
+				if(debug) fprintf(stderr, "Процесс %d получил приказ: part_size = %d, начало в %d\n", rank, ar[1], ar[2]);
+				int start_n = ar[2] + rank*ar[1];
 				int end_n = start_n + ar[1] - 1;
-				char *primes = (char*) malloc(end_n - start_n + 1);
+				char *primes = (char*) malloc(ar[1]);
 				find_pr(res, primes, start_n, end_n);
-				MPI_Gather(primes, ar[1], MPI_CHAR, res + ar[0], ar[1], MPI_CHAR, 0, MPI_COMM_WORLD);
+				MPI_Gather(primes, ar[1], MPI_CHAR, primes, ar[1], MPI_CHAR, 0, MPI_COMM_WORLD);
 				free(primes);
 				free(res);
 			}
