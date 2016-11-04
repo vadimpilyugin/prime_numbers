@@ -17,50 +17,65 @@ int at(int i, int start)
 {
 	return i+start;
 }
-void foo(char *res, char *primes, int start_n, int end_n)
+void find_pr(char *res, char *primes, int start_n, int end_n)
 {
-	int i, j, k;
+	int j, k, offset;
+	if(end_n < start_n)
+		return;
 	for(k = start_n; k <= end_n; k++)
 		primes[to_i(k, start_n)] = 1; //обнуляем массив простых чисел
-	for(j = start_n + 2 - (start_n % 2); j <= end_n; j += 2)
+	if(start_n == 1)
+		primes[0] = 0; //1-не простое
+	offset = start_n % 2;
+	int start = start_n + offset;
+	if(start == 2)
+		start = 4;
+	for(j = start; j <= end_n; j += 2)
 		primes[to_i(j, start_n)] = 0; //исключаем четные
 	for(k = 3; k*k <= end_n; k++) //идем по массиву простых
 		if(res[to_i(k, 1)]) //если число простое
-			for(j = start_n + k - (start_n % k); j <= end_n; j += k)
+		{
+			offset = (k-start_n % k)%k;
+			start = start_n + offset;
+			if(start == k)
+				start = k*k;
+			for(j = start; j <= end_n; j += k)
 				primes[to_i(j, start_n)] = 0;
-	for(i = 0; i < 100; i++)
-		printf("%d, ", res[i]);
-	printf("\n");
+		}
+
 }
-
-int main()
+void sieve_non_rec(char *res, int n)
 {
-	int n = 100;
-	char *res = (char*) malloc(n*sizeof(char));
-	int i, j, k;
-
+	int j, k;
 	for(k = 1; k <= n; k++)
 		res[to_i(k, 1)] = 1;
 	res[to_i(1, 1)] = 0; // 1 - не простое число
 	for(k = 1; k*k <= n; k++)
 		if(res[to_i(k, 1)])
+		{
 			if(k == 2)
 				for(j = 4; j <= n; j+=2)
 					res[to_i(j, 1)] = 0;
 			else
 				for(j = k*k; j <= n; j+=2*k)
 					res[to_i(j, 1)] = 0;
-	for(k = 1; k <= n; k++)
-		printf("%d, ", res[to_i(k, 1)]);
+		}
+}
+int main()
+{
+	int n = 100;
+	char *res = (char*) malloc(n*sizeof(char));
+	int i, j, k;
+	sieve_non_rec(res, n);
 	printf("\n");
 	for(k = 1; k <= n; k++)
 		if(res[to_i(k, 1)])
 			printf("%d, ", k);
 	printf("\n");
-	int start_n = n + 1;
-	int end_n = n + 1100;
+	int start_n = 1;
+	int end_n = 100;
 	char *primes = (char*) malloc((end_n-start_n+1)*sizeof(char));
-	foo(res, primes, start_n, end_n);
+	find_pr(res, primes, start_n, end_n);
 	for(k = start_n; k <= end_n; k++)
 		if(primes[to_i(k, start_n)])
 		{

@@ -1,8 +1,8 @@
-CXX = g++
-CXXFLAGS = -O2 -g -Wall -std=c++0x
+CXX = mpicc
+CXXFLAGS = -Wall
 
 # Strict compiler options
-CXXFLAGS += -Wfloat-equal -Wall
+CXXFLAGS += -Wfloat-equal
 # Directories with source code
 SRC_DIR = src
 INCLUDE_DIR = include
@@ -18,7 +18,7 @@ CXXFLAGS += -I $(INCLUDE_DIR)
 # Add path with compiled libraries to gcc search path
 CXXFLAGS +=
 # Link libraries gcc flag: library will be searched with prefix "lib".
-LDFLAGS = 
+LDFLAGS = -lm
 
 # Helper macros
 # subst is sensitive to leading spaces in arguments.
@@ -50,7 +50,6 @@ endif
 # deps.mk contains redirect to dependency generation
 deps.mk: 
 	mkdir -p $(BUILD_DIR) $(OBJ_DIR) $(BIN_DIR) $(DEP_DIR)
-	mkdir -p ./data/result
 	echo '-include $(call src_to_dep, $(CXXFILES))' >deps.mk
 
 # Rules for compiling targets
@@ -73,8 +72,8 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 # Delete all temprorary and binary files
 clean:
 	rm -rf $(BUILD_DIR)
-	rm -rf result/
 	rm -f deps.mk
+	rm -rf data/
 
 # Additional targers for testing purposes
 
