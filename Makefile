@@ -18,7 +18,7 @@ CXXFLAGS += -I $(INCLUDE_DIR)
 # Add path with compiled libraries to gcc search path
 CXXFLAGS +=
 # Link libraries gcc flag: library will be searched with prefix "lib".
-LDFLAGS = 
+LDFLAGS = -lm
 
 # Helper macros
 # subst is sensitive to leading spaces in arguments.

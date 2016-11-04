@@ -17,9 +17,9 @@ int at(int i, int start)
 {
 	return i+start;
 }
-void foo(char *res, char *primes, int start_n, int end_n)
+void find_pr(char *res, char *primes, int start_n, int end_n)
 {
-	int i, j, k;
+	int j, k;
 	for(k = start_n; k <= end_n; k++)
 		primes[to_i(k, start_n)] = 1; //обнуляем массив простых чисел
 	for(j = start_n + 2 - (start_n % 2); j <= end_n; j += 2)
@@ -28,12 +28,8 @@ void foo(char *res, char *primes, int start_n, int end_n)
 		if(res[to_i(k, 1)]) //если число простое
 			for(j = start_n + k - (start_n % k); j <= end_n; j += k)
 				primes[to_i(j, start_n)] = 0;
-	for(i = 0; i < 100; i++)
-		printf("%d, ", res[i]);
-	printf("\n");
 }
-
-void bar(char *res, int n)
+void sieve_non_rec(char *res, int n)
 {
 	int j, k;
 	for(k = 1; k <= n; k++)
@@ -41,31 +37,30 @@ void bar(char *res, int n)
 	res[to_i(1, 1)] = 0; // 1 - не простое число
 	for(k = 1; k*k <= n; k++)
 		if(res[to_i(k, 1)])
+		{
 			if(k == 2)
 				for(j = 4; j <= n; j+=2)
 					res[to_i(j, 1)] = 0;
 			else
 				for(j = k*k; j <= n; j+=2*k)
 					res[to_i(j, 1)] = 0;
+		}
 }
-
 int main()
 {
 	int n = 100;
 	char *res = (char*) malloc(n*sizeof(char));
 	int i, j, k;
-	bar(res, n);
-	for(k = 1; k <= n; k++)
-		printf("%d, ", res[to_i(k, 1)]);
+	sieve_non_rec(res, n);
 	printf("\n");
 	for(k = 1; k <= n; k++)
 		if(res[to_i(k, 1)])
 			printf("%d, ", k);
 	printf("\n");
-	int start_n = n + 1;
-	int end_n = n + 1100;
+	int start_n = 9521;
+	int end_n = 10000;
 	char *primes = (char*) malloc((end_n-start_n+1)*sizeof(char));
-	foo(res, primes, start_n, end_n);
+	find_pr(res, primes, start_n, end_n);
 	for(k = start_n; k <= end_n; k++)
 		if(primes[to_i(k, start_n)])
 		{
